@@ -25,27 +25,24 @@ export const loginUser = createAsyncThunk(
   async (loginData, { rejectWithValue }) => {
     try {
 
-      const response = await api.post("/api/auth/login", loginData)
+      const response = await api.post("/api/auth/login", {
+        emailId: loginData.email,    
+        passWord: loginData.password   
+      });
 
-      const data = response.data
+      const data = response.data;
 
-      // ⭐ user save
-      localStorage.setItem("user", JSON.stringify(data.user))
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
 
-
-      localStorage.setItem("token", data.token)
-
-      return data
+      return data;
 
     } catch (error) {
-
-      return rejectWithValue(error.response?.data)
-
+      return rejectWithValue(error.response?.data);
     }
   }
-)
+);
 
-0
 export  const logoutUser = createAsyncThunk(
   '/auth/logout',
   async (_, { rejectWithValue }) => {
