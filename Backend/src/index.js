@@ -25,8 +25,6 @@ app.use(cors({
   credentials: true
 }));
 
-app.options("*", cors());
-
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/doctors', doctorRoutes);
