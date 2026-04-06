@@ -18,12 +18,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(cors({
-    origin: [
-        "http://localhost:5173",
-        "https://doctor-appointment-nine-drab.vercel.app/"
-    ],
-    credentials: true,
+  origin: "https://doctor-appointment-nine-drab.vercel.app", 
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
 }));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/doctors', doctorRoutes);
