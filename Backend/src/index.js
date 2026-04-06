@@ -13,18 +13,13 @@ const doctorRoutes = require('./route/doctor');
 const patientRoutes = require('./route/patient');
 const paymentRoutes = require("./route/payment");
 
-
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-
 app.use(cors({
-    origin: 'http://localhost:5173',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    origin: ['http://localhost:5173', process.env.FRONTEND_URL],
+    credentials: true
 }));
 
 app.use('/api/auth', authRoutes);
@@ -35,9 +30,21 @@ app.use("/api/payment", paymentRoutes);
 
 const initalizationConnection = async () => {
     try {
-        await Promise.all([main(), redisClient.connect()]);
-        console.log("DB connected");
-        app.listen(process.env.PORT, () => console.log("Server at port "+process.env.PORT));
+        await main();
+
+        try {
+            await redisClient.connect();
+            console.log("Redis connected");
+        } catch (err) {
+            console.log("Redis failed, skipping...");
+        }
+
+        const PORT = process.env.PORT || 5000;
+
+        app.listen(PORT, () => {
+            console.log("Server running on port " + PORT);
+        });
+
     } catch (err) {
         console.log("ERROR: " + err);
     }
