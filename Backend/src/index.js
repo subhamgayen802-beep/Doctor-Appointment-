@@ -20,7 +20,7 @@ app.use(cookieParser());
 app.use(cors({
     origin: [
         "http://localhost:5173",
-        "https://doctor-appointment-ten-amber.vercel.app"
+        "https://doctor-appointment-784wb2r8q-subhamgayen802-4438s-projects.vercel.app/"
     ],
     credentials: true,
 }));
