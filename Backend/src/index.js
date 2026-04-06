@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(cors({
-  origin: "https://doctor-appointment-nine-drab.vercel.app", 
+  origin: "https://doctor-appointment-cdld9w26r-subhamgayen802-4438s-projects.vercel.app/", 
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
