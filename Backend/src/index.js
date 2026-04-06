@@ -18,8 +18,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(cors({
-  origin: "https://doctor-appointment-rho-rose.vercel.app/", 
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: [
+    "http://localhost:5173",
+    "https://your-frontend.vercel.app"
+  ],
   credentials: true
 }));
 
