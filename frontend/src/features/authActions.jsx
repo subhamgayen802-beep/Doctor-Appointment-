@@ -10,7 +10,7 @@ export  const registerUser = createAsyncThunk(
   '/auth/register',
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await api.post('/auth/register', userData);
+      const response = await api.post('/api/auth/register', userData);
       localStorage.setItem("token", response.data.token);
       toast.success('Registration successful!');
       return response.data;
@@ -25,7 +25,7 @@ export const loginUser = createAsyncThunk(
   async (loginData, { rejectWithValue }) => {
     try {
 
-      const response = await api.post("/auth/login", loginData)
+      const response = await api.post("/api/auth/login", loginData)
 
       const data = response.data
 
@@ -50,7 +50,7 @@ export  const logoutUser = createAsyncThunk(
   '/auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      await api.post('/auth/logout');
+      await api.post('/api/auth/logout');
       localStorage.removeItem('token');
       toast.success('Logged out successfully!');
       return true;
@@ -66,7 +66,7 @@ export  const logoutUser = createAsyncThunk(
   '/auth/checkAuth',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/auth/me');
+      const response = await api.get('/api/auth/me');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data);

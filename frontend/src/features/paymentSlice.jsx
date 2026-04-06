@@ -8,7 +8,7 @@ export const createOrder = createAsyncThunk(
   async (doctorId, { rejectWithValue }) => {
     try {
 
-      const response = await api.post("/payment/create-order", {
+      const response = await api.post("/api/payment/create-order", {
         doctorId
       });
 
@@ -31,7 +31,7 @@ export const verifyPayment = createAsyncThunk(
     try {
 
       const response = await api.post(
-        "/payment/verify-payment",
+        "/api/payment/verify-payment",
         paymentData
       );
 

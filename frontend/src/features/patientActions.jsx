@@ -6,7 +6,7 @@ export const bookAppointment = createAsyncThunk(
   'patient/bookAppointment',
   async (appointmentData, { rejectWithValue }) => {
     try {
-      const response = await api.post('/patients/appointments', appointmentData);
+      const response = await api.post('/api/patients/appointments', appointmentData);
       toast.success('Appointment booked!');
       return response.data;
     } catch (error) {
@@ -22,7 +22,7 @@ export const getMyAppointments = createAsyncThunk(
   'patient/getMyAppointments',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/patients/appointments');
+      const response = await api.get('/api/patients/appointments');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data);
@@ -34,7 +34,7 @@ export const cancelAppointment = createAsyncThunk(
   'patient/cancelAppointment',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await api.put(`/patients/appointments/${id}/cancel`);
+      const response = await api.put(`/api/patients/appointments/${id}/cancel`);
       toast.success('Appointment cancelled');
       return response.data;
     } catch (error) {

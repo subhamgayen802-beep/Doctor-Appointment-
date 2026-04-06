@@ -7,7 +7,7 @@ export const updateProfile = createAsyncThunk(
   'doctor/updateProfile',
   async (formData, { rejectWithValue }) => {
     try {
-      const response = await api.put('/doctors/profile', formData, {
+      const response = await api.put('/api/doctors/profile', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       toast.success('Profile updated!');
@@ -22,7 +22,7 @@ export  const getAllDoctorsPublic = createAsyncThunk(
   'doctor/getAllPublic',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/doctors/all');
+      const response = await api.get('/api/doctors/all');
       return response.data.doctors;
     } catch (error) {
       return rejectWithValue(error.response?.data);
@@ -35,7 +35,7 @@ export const getMyAppointments = createAsyncThunk(
   'doctor/getMyAppointments',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/doctors/appointments');
+      const response = await api.get('/api/doctors/appointments');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data);
@@ -47,7 +47,7 @@ export const updateAppointmentStatus = createAsyncThunk(
   'doctor/updateStatus',
   async ({ id, status }, { rejectWithValue }) => {
     try {
-      const response = await api.put(`/doctors/appointments/${id}/status`, { status });
+      const response = await api.put(`/api/doctors/appointments/${id}/status`, { status });
       toast.success(`Status updated to ${status}`);
       return response.data;
     } catch (error) {
@@ -61,7 +61,7 @@ export const getDoctorDashboard = createAsyncThunk(
   'doctor/getDashboard',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/doctors/dashboard');
+      const response = await api.get('/api/doctors/dashboard');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data);
@@ -73,7 +73,7 @@ export const getDoctorById = createAsyncThunk(
   'doctor/getById',
   async (id, { rejectWithValue }) => {
     try {
-      const { data } = await api.get(`/doctors/${id}`);
+      const { data } = await api.get(`/api/doctors/${id}`);
       return data.data;
     } catch (error) {
       return rejectWithValue(
@@ -89,7 +89,7 @@ export const getRelatedDoctors = createAsyncThunk(
   async ({ id, speciality }, { rejectWithValue }) => {
     try {
       const { data } = await api.get(
-        `/doctors/related/${id}/${speciality}`
+        `/api/doctors/related/${id}/${speciality}`
       );
       return data.data;
     } catch (error) {
