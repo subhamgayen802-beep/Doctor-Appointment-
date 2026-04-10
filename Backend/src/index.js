@@ -22,7 +22,7 @@ app.use(cookieParser());
 
 app.use(cors({
   origin: [
-    "https://doctor-appointment-rho-rose.vercel.app/"
+    "https://doctor-appointment-rho-rose.vercel.app"
   ],
   credentials: true
 }));
