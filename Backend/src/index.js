@@ -13,6 +13,9 @@ const doctorRoutes = require('./route/doctor');
 const patientRoutes = require('./route/patient');
 const paymentRoutes = require("./route/payment");
 
+
+// app.use(cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
