@@ -22,7 +22,7 @@ app.use(cookieParser());
 
 
 app.use(cors({
-    origin: 'https://doctor-appointment-omega-dun.vercel.app',
+    origin: 'https://doctor-appointment-omega-dun.vercel.app' ||'http://localhost:5173',
     credentials: true,
 }));
 
