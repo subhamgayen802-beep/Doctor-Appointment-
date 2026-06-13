@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
 import { useEffect, useState, useCallback, useRef } from "react"
 import { getDoctorById, clearSelectedDoctor } from "../features/doctorSlice"
-import { bookAppointment } from "../features/authSlice"
+import { bookAppointment } from "../features/patientSlice"
 import { assets } from "../assets/assets_frontend/assets"
 import ReletedDoctors from "../components/ReletedDoctors"
 
