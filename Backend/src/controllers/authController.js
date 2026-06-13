@@ -5,7 +5,6 @@ const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
 
 
-
 const register = async (req,res)=>{
        
 
@@ -16,11 +15,11 @@ const register = async (req,res)=>{
       const {firstName, emailId, password}  = req.body;
 
       req.body.password = await bcrypt.hash(password, 10);
-      req.body.role = 'patient'
+      req.body.role = 'user'
  
       const user = await User.create(req.body);
 
-      const token =  jwt.sign({_id:user._id , emailId:emailId, role:'patient'},process.env.JWT_KEY,{expiresIn: 60*60});
+      const token =  jwt.sign({_id:user._id , emailId:emailId, role:'user'},process.env.JWT_KEY,{expiresIn: 60*60});
       const reply = {
         firstName: user.firstName,
         emailId: user.emailId,
@@ -28,23 +27,25 @@ const register = async (req,res)=>{
         role:user.role,
     }
     
-     res.cookie('token',token,{maxAge: 60*60*1000});
+     
+    res.cookie('token', token, {
+      maxAge: 60 * 60 * 1000,
+      httpOnly: true,   
+      sameSite: 'none', 
+      secure: true,   // localhost false,production true
+    });
      res.status(201).json({
         user:reply,
-
         message:"Loggin Successfully"
     })
     }
     catch(err){
-      console.error("REGISTER ERROR:", err); // ← add this
         res.status(400).json({ message: err.message });
     }
 }
 
 
 const login = async (req, res) => {
-  
-
   try {
     
     const { emailId, password } = req.body;
@@ -70,7 +71,10 @@ const login = async (req, res) => {
     );
 
     res.cookie('token', token, {
-      maxAge: 60 * 60 * 1000, 
+      maxAge: 60 * 60 * 1000,
+      httpOnly: true,   
+      sameSite: 'none', 
+      secure: true,   
     });
 
     res.status(200).json({ 
@@ -95,8 +99,8 @@ const logout = async(req,res)=>{
         await redisClient.set(`token:${token}`,'Blocked');
         await redisClient.expireAt(`token:${token}`,payload.exp);
     
-         res.cookie("token",null,{expires: new Date(Date.now())});
-         res.send("Logged Out Succesfully");
+    res.cookie("token",null,{expires: new Date(Date.now())});
+    res.send("Logged Out Succesfully");
 
     }
     catch(err){
@@ -105,6 +109,25 @@ const logout = async(req,res)=>{
 }
 
 
+const adminRegister = async(req,res)=>{
+    try{
+   
+      validate(req.body); 
+      const {firstName, emailId, password}  = req.body;
+
+      req.body.password = await bcrypt.hash(password, 10);
+
+    
+     const user =  await User.create(req.body);
+     const token =  jwt.sign({_id:user._id , emailId:emailId, role:user.role},process.env.JWT_KEY,{expiresIn: 60*60});
+     res.cookie('token',token,{maxAge: 60*60*1000});
+     res.status(201).send("User Registered Successfully");
+    }
+    catch(err){
+        res.status(400).send("Error: "+err);
+    }
+}
 
 
-module.exports = {register, login,logout};
+
+module.exports = {register, login,logout,adminRegister};
