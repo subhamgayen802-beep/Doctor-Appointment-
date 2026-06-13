@@ -1,11 +1,11 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/schema");
+const User = require("../models/user");
 const redisClient = require("../config/redis")
 
-const userMiddleware = async (req,res,next)=>{
+const adminMiddleware = async (req,res,next)=>{
 
     try{
-        
+       
         const {token} = req.cookies;
         if(!token)
             throw new Error("Token is not persent");
@@ -19,6 +19,9 @@ const userMiddleware = async (req,res,next)=>{
         }
 
         const result = await User.findById(_id);
+
+        if(payload.role!='admin')
+            throw new Error("Invalid Token");
 
         if(!result){
             throw new Error("User Doesn't Exist");
@@ -43,4 +46,4 @@ const userMiddleware = async (req,res,next)=>{
 }
 
 
-module.exports = userMiddleware;
+module.exports = adminMiddleware;

@@ -1,6 +1,6 @@
 import  { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getAllDoctors, deleteDoctor } from "../features/adminActions";
+import { getAllDoctors, deleteDoctor } from "../features/adminSlice";
 
 const AllDoctors = () => {
   const dispatch = useDispatch();

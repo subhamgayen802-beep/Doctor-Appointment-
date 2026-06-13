@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux"
-import { getDoctorById,getAllDoctorsPublic } from "../features/doctorActions"
+import { getDoctorById,getAllDoctorsPublic } from "../features/doctorSlice"
 
 import { 
     Stethoscope, 
@@ -15,7 +15,7 @@ import {
     Calendar,
     Loader2,
     User,
-    DollarSign
+    IndianRupee  
 } from "lucide-react"
 
 function Doctor() {
@@ -45,19 +45,20 @@ function Doctor() {
     ], [])
 
     
-    const filteredDoctors = useMemo(() => {
+const filteredDoctors = useMemo(() => {
         let filtered = Array.isArray(doctors) ? doctors : []
 
-        if (speciality) {
-            const searchSpec = speciality.toLowerCase()
-            filtered = filtered.filter(doc => {
-                
-                const docSpec = (doc.speciality || doc.specialization || doc.specialty || '').toLowerCase()
-                return docSpec === searchSpec
-            })
-        }
+       if (speciality) {
+  const searchSpec = speciality.toLowerCase()
 
-        if (searchTerm) {
+  filtered = filtered.filter(doc => {
+    const docSpec = (doc.speciality || doc.specialization || doc.specialty || '').toLowerCase()
+
+    return docSpec.includes(searchSpec)
+  })
+}
+
+  if (searchTerm) {
             const term = searchTerm.toLowerCase()
             filtered = filtered.filter(doc => {
                 const name = (doc.firstName || doc.name || doc.fullName || '').toLowerCase()
@@ -86,9 +87,6 @@ function Doctor() {
         setSearchTerm("")
     }, [navigate])
 
-    useEffect(() => {
-        console.log('Doctors data:', doctors)
-    }, [doctors])
 
     if (loading && doctors.length === 0) {
         return (
@@ -331,12 +329,13 @@ const DoctorCard = ({ doctor, navigate, imageErrors, setImageErrors }) => {
                     </div>
                 )}
 
-                      {fees > 0 && (
-                    <div className="absolute top-4 left-4 flex items-center gap-1 bg-blue-600 px-2.5 py-1 rounded-lg shadow-sm">
-                        <DollarSign className="w-3.5 h-3.5 text-white" />
-                        <span className="text-xs font-bold text-white">${fees}</span>
-                    </div>
-                )}
+                  {fees > 0 && (
+                <div className="absolute top-4 left-4 flex items-center gap-1 bg-blue-600 px-2.5 py-1 rounded-lg shadow-sm">
+                    <IndianRupee className="w-3.5 h-3.5 text-white" />
+                    <span className="text-xs font-bold text-white">{fees}</span>
+                </div>
+                )}      
+
             </div>
 
       

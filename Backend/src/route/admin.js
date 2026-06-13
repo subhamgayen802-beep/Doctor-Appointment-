@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const protect = require('../middleware/authMiddleware');
+const adminMiddle = require('../middleware/adminMiddle');
 const upload = require('../middleware/multer');
 const {
 
@@ -13,14 +13,15 @@ const {
   
 } = require('../controllers/adminController');
 
-router.post('/doctors',protect(['admin']), upload.single('image'), createDoctor);
 
 
 
-router.get('/doctors', protect(['admin']),getAllDoctors);
-router.get('/patients',protect(['admin']), getAllPatients);
-router.get('/appointments',protect(['admin']), getAllAppointments);
-router.delete('/doctors/:id',protect(['admin']), deleteDoctor);
-router.get('/dashboard', protect(['admin']),adminDashboard);
+router.post('/admin/createDoctor',adminMiddle, upload.single('image'), createDoctor);
+
+router.get('/admin/Alldoctors', adminMiddle,getAllDoctors);
+router.get('/admin/allpatients',adminMiddle, getAllPatients);
+router.get('/admin/allappointments',adminMiddle, getAllAppointments);
+router.delete('/admin/doctors/:id',adminMiddle, deleteDoctor);
+router.get('/admin/Mydashboard', adminMiddle,adminDashboard);
 
 module.exports = router;

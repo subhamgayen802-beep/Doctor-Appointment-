@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
-import { getRelatedDoctors } from "../features/doctorActions"
+import { getRelatedDoctors } from "../features/doctorSlice"
 
 function ReletedDoctors({ id, speciality }) {
   const dispatch = useDispatch()

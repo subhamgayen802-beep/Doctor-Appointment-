@@ -1,332 +1,552 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { assets } from "../assets/assets_frontend/assets";
-import { logoutUser, checkAuth } from "../features/authActions";
+import { logoutUser } from "../features/authSlice";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const NAV_LINKS = [
+  { path: "/",        label: "HOME"        },
+  { path: "/doctors", label: "ALL DOCTORS" },
+  { path: "/about",   label: "ABOUT"       },
+  { path: "/contact", label: "CONTACT"     },
+];
+
+const APPOINTMENTS_ROUTE = {
+  doctor:  "/doctor/appointments",
+  patient: "/patient/my-appointments",
+  admin:   "/admin/appointments",
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Reads the first non-null, non-empty value from a set of dot-notation paths
+ * on an object. Useful for normalising inconsistent API response shapes.
+ *   pick(user, ["user.firstName", "firstName"])  → "Jane"
+ */
+const pick = (obj, paths) => {
+  for (const path of paths) {
+    const val = path.split(".").reduce((o, k) => o?.[k], obj);
+    if (val != null && val !== "") return val;
+  }
+  return null;
+};
+
+// ─── Custom Hooks ─────────────────────────────────────────────────────────────
+
+/**
+ * Normalises the Redux `user` object into a flat, predictable shape regardless
+ * of which backend response format it came from.
+ */
+function useUserInfo(user) {
+  return useMemo(() => {
+    if (!user) return null;
+
+    const rawRole = pick(user, [
+      "role",       "user.role",     "data.role",
+      "userRole",   "user.userRole",
+      "type",       "userType",      "user.type",
+    ]);
+
+    return {
+      role:  (rawRole ?? "").toLowerCase(),
+      name:  pick(user, ["firstName", "user.firstName", "name", "user.name", "fullName"]) ?? "User",
+      email: pick(user, ["email", "user.emailId", "user.email", "emailId"]) ?? "",
+      image: pick(user, ["image", "user.image", "profilePicture"]) ?? assets.upload_area_png,
+    };
+  }, [user]);
+}
+
+/** Returns true once the page scrolls past `threshold` pixels. */
+function useScrolled(threshold = 8) {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > threshold);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [threshold]);
+
+  return scrolled;
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 function Navbar() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const dispatch = useDispatch();
-  
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  const dispatch  = useDispatch();
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const scrolled = useScrolled();
+
   const { user, isAuthenticated } = useSelector((state) => state.auth);
-  
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userRoleState, setUserRoleState] = useState(null);
+  const userInfo = useUserInfo(user);
+  const isAdmin  = userInfo?.role === "admin";
 
+  // Auto-logout when the token is removed (e.g. cleared in another tab)
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    
-    if (!token && isAuthenticated) {
+    if (isAuthenticated && !localStorage.getItem("token")) {
       dispatch(logoutUser());
-      navigate('/login');
-    } else if (token && !user) {
-      dispatch(checkAuth());
+      navigate("/login");
     }
-  }, [dispatch, navigate, isAuthenticated, user]);
+  }, [dispatch, navigate, isAuthenticated]);
 
+  // Close the mobile drawer whenever the route changes
   useEffect(() => {
-    if (user) {
-      const role = getUserRole();
-      setUserRoleState(role);
-    
-    }
-  }, [user]);
+    setDrawerOpen(false);
+  }, [location.pathname]);
 
-  const navLinks = [
-    { path: "/", label: "HOME" },
-    { path: "/doctors", label: "ALL DOCTORS" },
-    { path: "/about", label: "ABOUT" },
-    { path: "/contact", label: "CONTACT" },
-  ];
-
-  const isActive = (path) => location.pathname === path;
-
-  
-  const getUserRole = () => {
-    if (!user) return null;
-    
-
-    const possiblePaths = [
-      user?.role,
-      user?.user?.role,
-      user?.data?.role,
-      user?.userRole,
-      user?.user?.userRole,
-      user?.type,
-      user?.userType,
-      user?.user?.type,
-    ];
-    
-    for (const path of possiblePaths) {
-      if (path) return path.toLowerCase(); // lowercase করে return
-    }
-    
-    return null;
-  };
-
-  const getUserName = () => {
-    if (user?.firstName) return user.firstName;
-    if (user?.user?.firstName) return user.user.firstName;
-    if (user?.name) return user.name;
-    if (user?.user?.name) return user.user.name;
-    if (user?.fullName) return user.fullName;
-    return "User";
-  };
-
-  const getUserEmail = () => {
-    if (user?.email) return user.email;
-    if (user?.user?.emailId) return user.user.emailId;
-    if (user?.user?.email) return user.user.email;
-    if (user?.emailId) return user.emailId;
-    return "";
-  };
-
-  const getUserImage = () => {
-    if (user?.image) return user.image;
-    if (user?.user?.image) return user.user.image;
-    if (user?.profilePicture) return user.profilePicture;
-    return assets.profile_pic;
-  };
-
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     dispatch(logoutUser());
-    setUserRoleState(null);
-    navigate('/login');
-  };
+    navigate("/login");
+  }, [dispatch, navigate]);
 
-  const userName = getUserName();
-  const userEmail = getUserEmail();
-  const userImage = getUserImage();
+  const handleAppointments = useCallback(() => {
+    navigate(APPOINTMENTS_ROUTE[userInfo?.role] ?? "/my-appointments");
+  }, [navigate, userInfo?.role]);
 
-  const currentRole = userRoleState || getUserRole();
+  const isActive = useCallback(
+    (path) => location.pathname === path,
+    [location.pathname]
+  );
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          
-          <div 
-            className="flex items-center gap-3 cursor-pointer group"
-            onClick={() => navigate("/")}
-          >
-            <div className="relative">
-              <img
-                src={assets.logo}
-                alt="HavenHealth"
-                className="w-18 h-18 object-contain transition-transform duration-300 group-hover:scale-105"
+    <>
+      <nav
+        className={`sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100
+                    transition-shadow duration-300 ${scrolled ? "shadow-md" : "shadow-sm"}`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+
+            <Logo onClick={() => navigate("/")} />
+
+            <DesktopNav links={NAV_LINKS} isActive={isActive} />
+
+            <div className="flex items-center gap-3">
+              {isAuthenticated && userInfo ? (
+                <UserMenu
+                  userInfo={userInfo}
+                  isAdmin={isAdmin}
+                  onLogout={handleLogout}
+                  onAppointments={handleAppointments}
+                  navigate={navigate}
+                />
+              ) : (
+                <AuthButtons navigate={navigate} />
+              )}
+
+              <HamburgerButton
+                isOpen={drawerOpen}
+                onClick={() => setDrawerOpen((v) => !v)}
               />
-              <div className="absolute inset-0 bg-blue-500/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
-            <span className="hidden sm:block text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-              HavenHealth
+
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile slide-in drawer — rendered outside <nav> to cover full viewport */}
+      <MobileDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        navLinks={NAV_LINKS}
+        isActive={isActive}
+        isAuthenticated={isAuthenticated}
+        userInfo={userInfo}
+        isAdmin={isAdmin}
+        onLogout={handleLogout}
+        onAppointments={handleAppointments}
+        navigate={navigate}
+      />
+    </>
+  );
+}
+
+// ─── Logo ─────────────────────────────────────────────────────────────────────
+
+function Logo({ onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label="Go to homepage"
+      className="flex items-center gap-3 group rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+    >
+      <div className="relative">
+        <img
+          src={assets.logo}
+          alt=""
+          aria-hidden="true"
+          className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-105"
+        />
+        {/* Glow on hover */}
+        <div className="absolute inset-0 bg-blue-500/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      </div>
+      <span className="hidden sm:block text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+        HavenHealth
+      </span>
+    </button>
+  );
+}
+
+// ─── Desktop Navigation ───────────────────────────────────────────────────────
+
+function DesktopNav({ links, isActive }) {
+  return (
+    <ul className="hidden md:flex items-center gap-1" role="list">
+      {links.map(({ path, label }) => (
+        <li key={path}>
+          <Link
+            to={path}
+            aria-current={isActive(path) ? "page" : undefined}
+            className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200
+              ${isActive(path)
+                ? "text-blue-600 bg-blue-50"
+                : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+              }`}
+          >
+            {label}
+            {isActive(path) && (
+              <span
+                aria-hidden="true"
+                className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"
+              />
+            )}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// ─── Hamburger Button ─────────────────────────────────────────────────────────
+
+function HamburgerButton({ isOpen, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={isOpen ? "Close menu" : "Open menu"}
+      aria-expanded={isOpen}
+      className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+    >
+      <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {isOpen ? (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        ) : (
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        )}
+      </svg>
+    </button>
+  );
+}
+
+// ─── User Menu (Desktop Dropdown) ─────────────────────────────────────────────
+
+function UserMenu({ userInfo, isAdmin, onLogout, onAppointments, navigate }) {
+  return (
+    <div className="relative group">
+
+      {/* Trigger button */}
+      <button
+        aria-label="Open user menu"
+        aria-haspopup="true"
+        className="flex items-center gap-2.5 px-3 py-2 rounded-full hover:bg-gray-50 transition-colors duration-200
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      >
+        <div className="relative">
+          <img
+            src={userInfo.image}
+            alt={userInfo.name}
+            className="w-9 h-9 rounded-full object-cover border-2 border-white shadow"
+          />
+          <span
+            aria-hidden="true"
+            className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"
+          />
+        </div>
+
+        <div className="hidden sm:block text-left leading-tight">
+          <p className="text-sm font-semibold text-gray-800">{userInfo.name}</p>
+          <p className="text-xs text-gray-500 capitalize">{userInfo.role || "—"}</p>
+        </div>
+
+        <img
+          src={assets.dropdown_icon}
+          alt=""
+          aria-hidden="true"
+          className="w-4 h-4 opacity-40 transition-transform duration-200 group-hover:rotate-180"
+        />
+      </button>
+
+      {/* Dropdown panel */}
+      <div
+        role="menu"
+        className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 z-50
+                   opacity-0 invisible translate-y-1
+                   group-hover:opacity-100 group-hover:visible group-hover:translate-y-0
+                   transition-all duration-200 origin-top-right"
+      >
+        <div className="p-2">
+
+          {/* Identity header */}
+          <div className="px-4 py-3 mb-1 border-b border-gray-100">
+            <p className="text-sm font-semibold text-gray-900">{userInfo.name}</p>
+            <p className="text-xs text-gray-500 truncate">{userInfo.email}</p>
+            <span className="inline-block mt-1.5 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full capitalize">
+              {userInfo.role}
             </span>
           </div>
 
-        
-          <ul className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <li key={link.path}>
+          {/* Admin-only action */}
+          {isAdmin && (
+            <DropdownItem
+              icon={<AdminIcon />}
+              label="Admin Panel"
+              onClick={() => navigate("/admin/dashboard")}
+              variant="danger"
+            />
+          )}
+
+          <DropdownItem
+            icon={<CalendarIcon />}
+            label="My Appointments"
+            onClick={onAppointments}
+          />
+
+          <div className="border-t border-gray-100 mt-1 pt-1">
+            <DropdownItem
+              icon={<LogoutIcon />}
+              label="Logout"
+              onClick={onLogout}
+              variant="danger"
+            />
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** A single styled row inside the dropdown menu. */
+function DropdownItem({ icon, label, onClick, variant = "default" }) {
+  const colorMap = {
+    default: "text-gray-700 hover:bg-blue-50 hover:text-blue-600",
+    danger:  "text-red-600 hover:bg-red-50",
+  };
+
+  return (
+    <button
+      role="menuitem"
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl transition-colors ${colorMap[variant]}`}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+// ─── Auth Buttons ─────────────────────────────────────────────────────────────
+
+function AuthButtons({ navigate }) {
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => navigate("/login")}
+        className="hidden sm:block px-4 py-2 text-sm font-medium text-gray-600 rounded-lg
+                   hover:text-blue-600 hover:bg-gray-50 transition-colors"
+      >
+        Sign In
+      </button>
+      <button
+        onClick={() => navigate("/signup")}
+        className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-5 py-2.5 rounded-full
+                   text-sm font-medium hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-0.5
+                   transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      >
+        Create Account
+      </button>
+    </div>
+  );
+}
+
+// ─── Mobile Drawer ────────────────────────────────────────────────────────────
+
+/**
+ * A full-height slide-in panel from the right for mobile navigation.
+ * Includes a dimmed backdrop that closes the drawer on click.
+ */
+function MobileDrawer({
+  isOpen, onClose,
+  navLinks, isActive,
+  isAuthenticated, userInfo, isAdmin,
+  onLogout, onAppointments, navigate,
+}) {
+  // Lock body scroll while the drawer is visible
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
+
+  return (
+    <>
+      {/* Dimmed backdrop */}
+      <div
+        aria-hidden="true"
+        onClick={onClose}
+        className={`fixed inset-0 z-40 bg-black/30 transition-opacity duration-300 md:hidden
+          ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+      />
+
+      {/* Drawer panel */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation menu"
+        className={`fixed top-0 right-0 z-50 h-full w-72 bg-white shadow-2xl
+                    flex flex-col transition-transform duration-300 md:hidden
+                    ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shrink-0">
+          <span className="text-base font-bold text-gray-800">Menu</span>
+          <button
+            onClick={onClose}
+            aria-label="Close menu"
+            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Scrollable nav content */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
+
+          {/* Page links */}
+          <ul role="list" className="space-y-1">
+            {navLinks.map(({ path, label }) => (
+              <li key={path}>
                 <Link
-                  to={link.path}
-                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg
-                    ${isActive(link.path) 
-                      ? "text-blue-600 bg-blue-50" 
-                      : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+                  to={path}
+                  onClick={onClose}
+                  aria-current={isActive(path) ? "page" : undefined}
+                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors
+                    ${isActive(path)
+                      ? "text-blue-600 bg-blue-50"
+                      : "text-gray-700 hover:bg-gray-50"
                     }`}
                 >
-                  {link.label}
-                  {isActive(link.path) && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full" />
-                  )}
+                  {label}
                 </Link>
               </li>
             ))}
           </ul>
 
-    
-          <div className="flex items-center gap-4">
-            {isAuthenticated && user ? (
-              <div className="relative group">
-                <button className="flex items-center gap-3 px-3 py-2 rounded-full hover:bg-gray-50 transition-colors duration-200">
-                  <div className="relative">
-                    <img
-                      src={userImage}
-                      alt="profile"
-                      className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md"
-                    />
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
-                  </div>
-                  <div className="hidden sm:block text-left">
-                    <p className="text-sm font-semibold text-gray-800">{userName}</p>
-                    <p className="text-xs text-gray-500 capitalize">{currentRole || 'Loading...'}</p>
-                  </div>
-                  <img
-                    src={assets.dropdown_icon}
-                    alt="menu"
-                    className="w-4 h-4 text-gray-400 transition-transform duration-200 group-hover:rotate-180"
-                  />
-                </button>
+          {/* Authenticated actions */}
+          {isAuthenticated && userInfo && (
+            <>
+              <hr className="my-3 border-gray-100" />
 
-             
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 
-                              opacity-0 invisible group-hover:opacity-100 group-hover:visible
-                              transition-all duration-200 transform origin-top-right z-50">
-                  <div className="p-2">
-                    <div className="px-4 py-3 border-b border-gray-100 mb-2">
-                      <p className="text-sm font-semibold text-gray-800">{userName}</p>
-                      <p className="text-xs text-gray-500">{userEmail}</p>
-                 
-                      <p className="text-xs text-blue-500 mt-1">Role: {currentRole}</p>
-                    </div>
-            
-                   
-                    
-                    {(currentRole === 'admin' || user?.role === 'admin' || user?.user?.role === 'admin') && (
-                      <button
-                        onClick={() => navigate('/admin/dashboard')}
-                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors flex items-center gap-3"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        Admin Panel
-                      </button>
-                    )}
-                    
-                    <button
-                      onClick={() => {
-                        if (currentRole === 'doctor') navigate('/doctor/appointments');
-                        else if (currentRole === 'patient') navigate('/patient/my-appointments');
-                        else if (currentRole === 'admin') navigate('/admin/appointments');
-                        else navigate('/my-appointments');
-                      }}
-                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors flex items-center gap-3"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      My Appointments
-                    </button>
-                    
-                
-                    <div className="border-t border-gray-100 mt-2 pt-2">
-                      <button
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors flex items-center gap-3"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        Logout
-                      </button>
-                    </div>
-                  </div>
+              {/* Mini profile card */}
+              <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl">
+                <img
+                  src={userInfo.image}
+                  alt={userInfo.name}
+                  className="w-9 h-9 rounded-full object-cover border border-gray-200 shrink-0"
+                />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 truncate">{userInfo.name}</p>
+                  <p className="text-xs text-gray-500 capitalize">{userInfo.role}</p>
                 </div>
               </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => navigate("/login")}
-                  className="hidden sm:block text-gray-600 hover:text-blue-600 font-medium text-sm transition-colors"
-                >
-                  Sign In
-                </button>
-                <button
-                  onClick={() => navigate("/create")}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-6 py-2.5 rounded-full
-                           hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5 
-                           transition-all duration-200 text-sm font-medium"
-                >
-                  Create Account
-                </button>
-              </div>
-            )}
 
-            <button 
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {isMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <ul role="list" className="space-y-1 mt-2">
+                {isAdmin && (
+                  <li>
+                    <button
+                      onClick={() => { navigate("/admin/dashboard"); onClose(); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                    >
+                      <AdminIcon />
+                      Admin Panel
+                    </button>
+                  </li>
                 )}
-              </svg>
-            </button>
-          </div>
+                <li>
+                  <button
+                    onClick={() => { onAppointments(); onClose(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
+                  >
+                    <CalendarIcon />
+                    My Appointments
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => { onLogout(); onClose(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                  >
+                    <LogoutIcon />
+                    Logout
+                  </button>
+                </li>
+              </ul>
+            </>
+          )}
         </div>
 
-        {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in">
-            <ul className="space-y-1">
-              {navLinks.map((link) => (
-                <li key={link.path}>
-                  <Link
-                    to={link.path}
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`block px-4 py-3 text-sm font-medium rounded-xl transition-colors
-                      ${isActive(link.path) 
-                        ? "text-blue-600 bg-blue-50" 
-                        : "text-gray-600 hover:bg-gray-50"
-                      }`}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-              
-              {isAuthenticated && user && (
-                <>
-          
-                  {(currentRole === 'admin' || user?.role === 'admin') && (
-                    <li>
-                      <button
-                        onClick={() => {
-                          navigate('/admin/dashboard');
-                          setIsMenuOpen(false);
-                        }}
-                        className="block w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl"
-                      >
-                        Admin Panel
-                      </button>
-                    </li>
-                  )}
-
-                  <li>
-                    <button
-                      onClick={() => {
-                        if (currentRole === 'doctor') navigate('/doctor/appointments');
-                        else if (currentRole === 'patient') navigate('/patient/my-appointments');
-                        else if (currentRole === 'admin') navigate('/admin/appointments');
-                        setIsMenuOpen(false);
-                      }}
-                      className="block w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl"
-                    >
-                      My Appointments
-                    </button>
-                  </li>
-                  
-                  <li>
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setIsMenuOpen(false);
-                      }}
-                      className="block w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl"
-                    >
-                      Logout
-                    </button>
-                  </li>
-                </>
-              )}
-            </ul>
-          </div> 
-        )} 
+        {/* Sign-in / sign-up CTA pinned to the bottom for unauthenticated users */}
+        {!isAuthenticated && (
+          <div className="shrink-0 px-6 py-5 border-t border-gray-100 space-y-2">
+            <button
+              onClick={() => { navigate("/login"); onClose(); }}
+              className="w-full py-2.5 text-sm font-medium text-gray-700 border border-gray-200 rounded-full hover:bg-gray-50 transition-colors"
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => { navigate("/signup"); onClose(); }}
+              className="w-full py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full hover:opacity-90 transition-opacity"
+            >
+              Create Account
+            </button>
+          </div>
+        )}
       </div>
-    </nav>
+    </>
+  );
+}
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
+
+function AdminIcon() {
+  return (
+    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  );
+}
+
+function LogoutIcon() {
+  return (
+    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+    </svg>
   );
 }
 

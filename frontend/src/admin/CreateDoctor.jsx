@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
-import { createDoctor } from "../features/adminActions";
+import { createDoctor } from "../features/adminSlice";
 
 const CreateDoctor = () => {
   const dispatch = useDispatch();
@@ -105,7 +105,7 @@ const CreateDoctor = () => {
             {[
               { name: "firstName", placeholder: "Full Name" },
               { name: "emailId", placeholder: "Email", type: "email" },
-              { name: "passWord", placeholder: "Password", type: "password" },
+              { name: "password", placeholder: "password", type: "password" },
               { name: "specialization", placeholder: "Specialization" },
               { name: "experience", placeholder: "Experience (Years)", type: "number" },
               { name: "fees", placeholder: "Consultation Fees", type: "number" },

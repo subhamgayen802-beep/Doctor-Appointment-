@@ -1,11 +1,12 @@
 const Appointment = require('../models/appointment');
-const User = require('../models/schema')
+const User = require('../models/user')
 
 
 const bookAppointment = async (req, res) => {
   try {
 
     const { doctorId, appointmentDate, timeSlot,fees } = req.body;
+
 
     if (!doctorId || !appointmentDate || !timeSlot || !fees) {
       return res.status(400).json({
@@ -14,7 +15,7 @@ const bookAppointment = async (req, res) => {
     }
 
     const appointment = await Appointment.create({
-      patient: req.user.id,
+      patient: req.result.id,
       doctorId,
       appointmentDate,
       timeSlot,
@@ -36,7 +37,7 @@ const bookAppointment = async (req, res) => {
 };
 const getMyAppointments = async (req, res) => {
     try {
-        const appointments = await Appointment.find({ patient: req.user._id })
+        const appointments = await Appointment.find({ patient: req.result._id })
             .sort({ appointmentDate: -1 });
 
         const result = [];
@@ -68,7 +69,7 @@ const cancelAppointment = async (req, res) => {
         
         const appointment = await Appointment.findOne({
             _id: id,
-            patient: req.user._id
+            patient: req.result._id
         });
         
         if (!appointment) {

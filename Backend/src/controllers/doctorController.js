@@ -1,24 +1,24 @@
-const User = require('../models/schema');
+const User = require('../models/user');
 const Appointment = require('../models/appointment');
 
 
 const getMyAppointments = async (req, res) => {
   try {
 
-    const appointments = await Appointment.find({
-      doctorId: req.user._id
-    })
-      .populate('patient', 'firstName emailId')
-      .sort({ appointmentDate: -1 });
-
-    res.status(200).json({
-      success: true,
-      appointments
-    });
+      const appointments = await Appointment.find({
+        doctorId: req.result._id
+      })
+        .populate('patient', 'firstName emailId')
+        .sort({ appointmentDate: -1 });
+  
+      res.status(200).json({
+        success: true,
+        appointments
+      });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).json(error.message);
+    
+    res.status(500).json(error);
   }
 };
 
@@ -41,7 +41,7 @@ const updateAppointmentStatus = async (req, res) => {
       });
     }
 
-    if (!req.user || !req.user._id) {
+    if (!req.result || !req.result._id) {
       return res.status(401).json({
         error: 'Not authenticated'
       });
@@ -50,7 +50,7 @@ const updateAppointmentStatus = async (req, res) => {
     const appointment = await Appointment.findOneAndUpdate(
       {
         _id: id,
-        doctorId: req.user._id
+        doctorId: req.result._id
       },
       { status },
       { new: true }
@@ -69,7 +69,7 @@ const updateAppointmentStatus = async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+
     res.status(500).json({
       success:false,
       error: err.message
@@ -80,7 +80,7 @@ const updateAppointmentStatus = async (req, res) => {
 const doctorDashboard = async (req, res) => {
   try {
 
-    const doctorId = req.user._id;
+    const doctorId = req.result._id;
 
  
     const todayStart = new Date();
@@ -135,7 +135,7 @@ const doctorDashboard = async (req, res) => {
 
 const  getAllDoctorsPublic  = async (req, res)=> {
     try{
-   const doctors = await User.find({ role: 'doctor' }).select('-password -__v').sort({ createdAt: -1 });
+          const doctors = await User.find({ role: 'doctor' }).select('-password -__v').sort({ createdAt: -1 });
            res.status(200).json({
             count: doctors.length,
             doctors

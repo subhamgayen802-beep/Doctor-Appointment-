@@ -1,6 +1,6 @@
 
 const jwt = require("jsonwebtoken");
-const User = require("../models/schema");
+const User = require("../models/user");
 const redisClient = require("../config/redis");
 
 const protect = (roles = []) => {
@@ -24,7 +24,7 @@ const protect = (roles = []) => {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      req.user = user;
+      req.result = user;
       next();
     } catch (err) {
       res.status(401).json({ message: "Unauthorized" });

@@ -1,5 +1,5 @@
 const Razorpay = require("razorpay");
-const User = require("../models/schema");
+const User = require("../models/user");
 const Appointment = require("../models/appointment");
 const crypto = require("crypto");
 

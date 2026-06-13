@@ -70,7 +70,7 @@ export default function Banner() {
 
        
           <motion.button 
-            onClick={() => { navigate('/create'); scrollTo(0, 0); }}
+            onClick={() => { navigate('/signup'); scrollTo(0, 0); }}
             className="group relative bg-white text-blue-600 text-sm sm:text-base font-semibold px-8 py-4 rounded-full mt-8 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

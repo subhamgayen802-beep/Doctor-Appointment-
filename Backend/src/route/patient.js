@@ -7,12 +7,10 @@ const {
     cancelAppointment,
     
 } = require('../controllers/patientController');
-
 router.use(protect(['patient']));
 
-
-router.post('/appointments', bookAppointment);
-router.get('/appointments', getMyAppointments);
-router.put('/appointments/:id/cancel',cancelAppointment);
+router.post('/patients/bookappointments', bookAppointment);
+router.get('/patients/myappointments',getMyAppointments);
+router.put('/patients/appointments/:id/cancel',cancelAppointment);
 
 module.exports = router;

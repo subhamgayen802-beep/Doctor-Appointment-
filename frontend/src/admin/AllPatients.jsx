@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getAllPatients } from "../features/adminActions";
+import { getAllPatients } from "../features/adminSlice";
 
 const AllPatients = () => {
   const dispatch = useDispatch();

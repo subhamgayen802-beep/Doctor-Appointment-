@@ -1,5 +1,5 @@
 const redisClient = require('../config/redis');
-const User =require('../models/schema');
+const User =require('../models/user');
 const validate=require('../utils/validator');
 const bcrypt=require('bcryptjs');
 const Appointment = require('../models/appointment')
@@ -8,92 +8,55 @@ const Appointment = require('../models/appointment')
 
 
  
-
-const adminLogin = async (req, res) => {
-    try {
-        const { emailId, passWord } = req.body;
-        
-        if (!emailId || !passWord) {
-            throw new Error('Invalid credentials');
-        }
-        
-        const admin = await User.findOne({ emaAilId, role: 'admin' });
-        if (!admin) {
-            throw new Error('dmin not found');
-        }
-        
-        const match = await bcrypt.compare(passWord, admin.passWord);
-        if (!match) {
-            throw new Error('Invalid credentials');
-        }
-        
-        const token = jwt.sign(
-            { _id: admin._id, emailId: emailId, role: admin.role },
-             process.env.JWT_KEY,
-            { expiresIn: '1h' }
-        );
-        
-        res.cookie('token', token, { maxAge: 60 * 60 * 1000 });
-        res.status(200).send('Admin login successfully');
-    } catch (err) {
-        res.status(401).send('Error: ' + err.message);
-    }
-};
 const createDoctor = async (req, res) => {
   try {
-
-
-     
     const {
-      firstName,
-      emailId,
-      passWord,
-      specialization,
-      experience,
-      fees,
-      phone,
-      description
+      firstName, emailId, password,
+      specialization, experience, fees, phone, description
     } = req.body;
 
-    if (!firstName || !emailId || !passWord || !specialization) {
-      return res.status(400).json("All required fields must be provided");
+    if (!firstName || !emailId || !password || !specialization) {
+      return res.status(400).json({ message: "All required fields must be provided" });
     }
 
     const existingDoctor = await User.findOne({ emailId });
     if (existingDoctor) {
-      return res.status(400).json("Doctor already exists");
+      return res.status(400).json({ message: "Doctor already exists" });
     }
 
-    const hashedPassword = await bcrypt.hash(passWord, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const doctorData = {
-      firstName,
-      emailId,
-      passWord: hashedPassword,
+      firstName, emailId,
+      password: hashedPassword,
       role: "doctor",
       specialization,
       experience: experience || 0,
       fees: fees || 0,
-      phone,
-      description,
-      createdBy: req.user._id
+      phone, description,
+      createdBy: req.result._id
     };
 
-
+    // ✅ Image শুধু থাকলেই set করবে
     if (req.file) {
-      doctorData.image = req.file.path;          
-      doctorData.cloudinaryId = req.file.filename; 
+      doctorData.image = req.file.path;
+      doctorData.cloudinaryId = req.file.filename;
     }
 
     const doctor = await User.create(doctorData);
 
-    res.status(200).json({
+    // ✅ Password response-এ পাঠাবো না
+    const doctorResponse = doctor.toObject();
+    delete doctorResponse.password;
+
+    res.status(201).json({
       message: "Doctor created successfully",
-      doctor
+      doctor: doctorResponse
     });
 
   } catch (err) {
-    res.status(400).json("Error: " + err.message);
+    // ✅ 500 দাও internal error এর জন্য, 400 নয়
+    res.status(500).json({ message: "Error: " + err.message });
   }
 };
 
@@ -101,7 +64,7 @@ const createDoctor = async (req, res) => {
 const getAllDoctors = async (req, res) => {
     try {
         
-        const doctors = await User.find({ role: 'doctor' }).select('-passWord');
+        const doctors = await User.find({ role: 'doctor' }).select('-password');
       
         res.status(200).json({
             count: doctors.length,
@@ -113,7 +76,7 @@ const getAllDoctors = async (req, res) => {
 };
 const getAllPatients = async (req, res) => {
     try {
-        const patients = await User.find({ role: 'patient' }).select('-passWord');
+        const patients = await User.find({ role: 'patient' }).select('-password');
 
     
         res.status(200).json({
@@ -179,5 +142,5 @@ const adminDashboard = async (req, res) => {
     }
 };
 
-module.exports = {adminLogin,createDoctor,getAllDoctors,getAllPatients,getAllAppointments,deleteDoctor,adminDashboard
+module.exports = {createDoctor,getAllDoctors,getAllPatients,getAllAppointments,deleteDoctor,adminDashboard
 };

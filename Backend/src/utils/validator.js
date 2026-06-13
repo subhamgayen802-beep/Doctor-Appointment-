@@ -4,7 +4,7 @@ const validator=require('validator');
 const validate = (data)=>{
 
 
-    const mandatoryField =['firstName','emailId','passWord'];
+    const mandatoryField =['firstName','emailId','password'];
     const isAllowed =mandatoryField.every((k)=> Object.keys(data).includes(k));
 
 
@@ -12,7 +12,7 @@ const validate = (data)=>{
         throw new Error(' some field missing');
     if(!validator.isEmail(data.emailId))
         throw new Error('invalid email');
-    if(!validator.isStrongPassword(data.passWord))
+    if(!validator.isStrongPassword(data.password))
         throw new Error('week password');
 
 

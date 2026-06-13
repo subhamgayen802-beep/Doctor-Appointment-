@@ -1,28 +1,13 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk,createSlice } from '@reduxjs/toolkit';
 import api from '../api/axiosConfig';
 import toast from 'react-hot-toast';
-import { createSlice } from '@reduxjs/toolkit';
 
-export const updateProfile = createAsyncThunk(
-  'doctor/updateProfile',
-  async (formData, { rejectWithValue }) => {
-    try {
-      const response = await api.put('/api/doctors/profile', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      toast.success('Profile updated!');
-      return response.data;
-    } catch (error) {
-      toast.error('Failed to update profile');
-      return rejectWithValue(error.response?.data);
-    }
-  }
-);
+
 export  const getAllDoctorsPublic = createAsyncThunk(
   'doctor/getAllPublic',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/api/doctors/all');
+      const response = await api.get('/allDoctors');
       return response.data.doctors;
     } catch (error) {
       return rejectWithValue(error.response?.data);
@@ -35,7 +20,7 @@ export const getMyAppointments = createAsyncThunk(
   'doctor/getMyAppointments',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/api/doctors/appointments');
+      const response = await api.get('/doctor/CheckAppointments');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data);
@@ -47,7 +32,7 @@ export const updateAppointmentStatus = createAsyncThunk(
   'doctor/updateStatus',
   async ({ id, status }, { rejectWithValue }) => {
     try {
-      const response = await api.put(`/api/doctors/appointments/${id}/status`, { status });
+      const response = await api.put(`/doctor/appointments/${id}/status`, { status });
       toast.success(`Status updated to ${status}`);
       return response.data;
     } catch (error) {
@@ -61,7 +46,7 @@ export const getDoctorDashboard = createAsyncThunk(
   'doctor/getDashboard',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/api/doctors/dashboard');
+      const response = await api.get('/doctor/dashboard');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data);
@@ -73,7 +58,7 @@ export const getDoctorById = createAsyncThunk(
   'doctor/getById',
   async (id, { rejectWithValue }) => {
     try {
-      const { data } = await api.get(`/api/doctors/${id}`);
+      const { data } = await api.get(`/doctor/${id}`);
       return data.data;
     } catch (error) {
       return rejectWithValue(
@@ -89,7 +74,7 @@ export const getRelatedDoctors = createAsyncThunk(
   async ({ id, speciality }, { rejectWithValue }) => {
     try {
       const { data } = await api.get(
-        `/api/doctors/related/${id}/${speciality}`
+        `/DoctorRelated/${id}/${speciality}`
       );
       return data.data;
     } catch (error) {
@@ -130,14 +115,11 @@ const doctorSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(updateProfile.fulfilled, (state, action) => {
-      state.profile = action.payload.doctor;
-    });
     builder.addCase(getMyAppointments.fulfilled, (state, action) => {
       state.appointments = action.payload.appointments;
     });
     builder
-    .addCase(getAllDoctorsPublic.pending, (state) => {
+  .addCase(getAllDoctorsPublic.pending, (state) => {
   state.loading = true;
   state.error = null;
 })

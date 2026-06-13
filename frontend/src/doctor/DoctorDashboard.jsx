@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getDoctorDashboard } from '../features/doctorActions';
+import { getDoctorDashboard } from '../features/doctorSlice';
 
 const DoctorDashboard = () => {
   const dispatch = useDispatch();
