@@ -22,7 +22,7 @@ app.use(cookieParser());
 
 
 app.use(cors({
-    origin: 'https://vercel.com/subhamgayen802-4438s-projects/doctor-appointment',
+    origin: 'https://doctor-appointment-omega-dun.vercel.app',
     credentials: true,
 }));
 
