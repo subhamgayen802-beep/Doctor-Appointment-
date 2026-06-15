@@ -10,7 +10,7 @@ const {
    
 } = require('../controllers/authController');
 
-router.post('/user/register',register ); 
+router.post('/register',register ); 
 router.post('/login', login);
 router.post('/logout',protect(), logout);
 router.get('/check',protect(),(req,res)=>{

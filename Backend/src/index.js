@@ -26,7 +26,7 @@ app.use(cors({
     credentials: true,
 }));
 
-app.use( authRoutes);
+app.use( "/user",authRoutes);
 app.use(adminRoutes);
 app.use(doctorRoutes);
 app.use( patientRoutes);
