@@ -51,26 +51,57 @@ const initialState = {
   loading: false,
   error: null
 };
-
 const patientSlice = createSlice({
   name: 'patient',
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(bookAppointment.fulfilled, (state, action) => {
-      state.appointments.push(action.payload.appointment);
-    });
-    builder.addCase(getMyAppointments.fulfilled, (state, action) => {
-      state.appointments = action.payload.appointments;
-    });
-    
-    builder.addCase(cancelAppointment.fulfilled, (state, action) => {
-      const index = state.appointments.findIndex(a => a._id === action.payload.appointment._id);
-      if (index !== -1) {
-        state.appointments[index].status = 'cancelled';
-      }
-    });
+    // ✅ bookAppointment loading cases যোগ করো
+    builder
+      .addCase(bookAppointment.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(bookAppointment.fulfilled, (state, action) => {
+        state.loading = false;
+        state.appointments.push(action.payload.appointment);
+      })
+      .addCase(bookAppointment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // ✅ getMyAppointments loading cases যোগ করো
+      .addCase(getMyAppointments.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getMyAppointments.fulfilled, (state, action) => {
+        state.loading = false;
+        state.appointments = action.payload.appointments;
+      })
+      .addCase(getMyAppointments.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // ✅ cancelAppointment loading cases যোগ করো
+      .addCase(cancelAppointment.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(cancelAppointment.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.appointments.findIndex(
+          (a) => a._id === action.payload.appointment._id
+        );
+        if (index !== -1) {
+          state.appointments[index].status = 'cancelled';
+        }
+      })
+      .addCase(cancelAppointment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   }
 });
-
 export default patientSlice.reducer;

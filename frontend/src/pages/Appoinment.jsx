@@ -23,10 +23,9 @@ function Appointment() {
     error: state.doctor?.error
   }))
 
-  const { loading: bookingLoading } = useSelector((state) => ({
-    loading: state.auth?.loading
-  }))
-  
+ // ✅ Redux থেকে user ও bookingLoading নাও
+const { user, isAuthenticated } = useSelector((state) => state.auth);
+const { loading: bookingLoading } = useSelector((state) => state.patient); // বা যেটা তোমার slice নাম
 
   const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
@@ -35,7 +34,6 @@ function Appointment() {
   const [slotTime, setSlotTime] = useState('')
   const [bookingSuccess, setBookingSuccess] = useState(false)
 
-  // Prevent multiple clicks
   const isBookingRef = useRef(false)
 
   const getAvailableSlots = useCallback(() => {
@@ -168,16 +166,13 @@ function Appointment() {
 //   }
 
 // }
-
-  const handleBookAppointment = async () => {
-    // Guard: prevent double-click
+const handleBookAppointment = async () => {
     if (isBookingRef.current || bookingLoading) return
     isBookingRef.current = true
 
     try {
-      const user = JSON.parse(localStorage.getItem("user"))
-
-      if (!user) {
+      // ✅ localStorage এর বদলে Redux user
+      if (!isAuthenticated || !user) {
         alert("Please login first")
         navigate("/login")
         return
@@ -190,7 +185,7 @@ function Appointment() {
 
       const appointmentData = {
         doctorId: docInfo._id,
-        patientId: user._id,
+        patientId: user._id,   // ✅ Redux থেকে
         appointmentDate: docSlots[slotIndex][0].datetime.toISOString().split("T")[0],
         timeSlot: slotTime,
         fees: docInfo.fees
@@ -199,13 +194,15 @@ function Appointment() {
       await dispatch(bookAppointment(appointmentData)).unwrap()
       setBookingSuccess(true)
       setTimeout(() => navigate("/patient/my-appointments"), 800)
+
     } catch (err) {
       console.log(err)
       alert("Failed to book appointment. Please try again.")
     } finally {
       isBookingRef.current = false
     }
-  }
+}
+  co
 
   if (doctorLoading || !docInfo) {
     return (
