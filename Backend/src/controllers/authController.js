@@ -44,27 +44,50 @@ const register = async (req,res)=>{
     }
 }
 
+
 const login = async (req, res) => {
   try {
+    
     const { emailId, password } = req.body;
-    console.log('Login attempt:', emailId); // ← যোগ করো
 
     const user = await User.findOne({ emailId });
-    console.log('User found:', !!user); // ← যোগ করো
 
-    if (!user) throw new Error("Invalid Credentials");
+    if (!user) throw new Error("Invalid Credentials"); 
 
     const match = await bcrypt.compare(password, user.password);
-    console.log('Password match:', match); // ← যোগ করো
-
     if (!match) throw new Error("Invalid Credentials");
-    // বাকি code...
+
+    const reply = {
+      firstName: user.firstName,
+      emailId: user.emailId,
+      _id: user._id,
+      role: user.role,
+    };
+
+    const token = jwt.sign(
+      { _id: user._id, emailId: emailId, role: user.role },
+      process.env.JWT_KEY,
+      { expiresIn: 60 * 60 }
+    );
+
+    res.cookie('token', token, {
+      maxAge: 60 * 60 * 1000,
+      httpOnly: true,   
+      sameSite: 'none', 
+      secure: true,   
+    });
+
+    res.status(200).json({ 
+      user: reply,
+      message: "Logged in Successfully"
+    });
 
   } catch (err) {
-    console.error('Login error:', err.message); // ← যোগ করো
-    res.status(401).json({ message: err.message });
+    res.status(401).json({ message: err.message }); 
   }
 };
+
+
 
 const logout = async(req,res)=>{
 
