@@ -45,7 +45,6 @@ const createDoctor = async (req, res) => {
 
     const doctor = await User.create(doctorData);
 
-    // ✅ Password response-এ পাঠাবো না
     const doctorResponse = doctor.toObject();
     delete doctorResponse.password;
 
@@ -55,7 +54,7 @@ const createDoctor = async (req, res) => {
     });
 
   } catch (err) {
-    // ✅ 500 দাও internal error এর জন্য, 400 নয়
+
     res.status(500).json({ message: "Error: " + err.message });
   }
 };

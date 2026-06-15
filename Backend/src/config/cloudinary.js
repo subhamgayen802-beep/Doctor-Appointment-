@@ -11,7 +11,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: '	doctorAppoinment',
+    folder: 'doctorAppoinment',
     allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
     transformation: [{ width: 500, height: 500, crop: 'limit' }],
   },
