@@ -15,7 +15,7 @@ const register = async (req,res)=>{
       const {firstName, emailId, password}  = req.body;
 
       req.body.password = await bcrypt.hash(password, 10);
-      req.body.role = 'user'
+      req.body.role = 'patient'
  
       const user = await User.create(req.body);
 
