@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { assets } from "../assets/assets_frontend/assets";
 import { logoutUser } from "../features/authSlice";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+
 
 const NAV_LINKS = [
   { path: "/",        label: "HOME"        },
@@ -19,13 +19,7 @@ const APPOINTMENTS_ROUTE = {
   admin:   "/admin/appointments",
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Reads the first non-null, non-empty value from a set of dot-notation paths
- * on an object. Useful for normalising inconsistent API response shapes.
- *   pick(user, ["user.firstName", "firstName"])  → "Jane"
- */
 const pick = (obj, paths) => {
   for (const path of paths) {
     const val = path.split(".").reduce((o, k) => o?.[k], obj);
@@ -34,12 +28,6 @@ const pick = (obj, paths) => {
   return null;
 };
 
-// ─── Custom Hooks ─────────────────────────────────────────────────────────────
-
-/**
- * Normalises the Redux `user` object into a flat, predictable shape regardless
- * of which backend response format it came from.
- */
 function useUserInfo(user) {
   return useMemo(() => {
     if (!user) return null;
@@ -59,7 +47,6 @@ function useUserInfo(user) {
   }, [user]);
 }
 
-/** Returns true once the page scrolls past `threshold` pixels. */
 function useScrolled(threshold = 8) {
   const [scrolled, setScrolled] = useState(false);
 
@@ -71,8 +58,6 @@ function useScrolled(threshold = 8) {
 
   return scrolled;
 }
-
-// ─── Main Component ───────────────────────────────────────────────────────────
 
 function Navbar() {
   const navigate  = useNavigate();
@@ -86,15 +71,7 @@ function Navbar() {
   const userInfo = useUserInfo(user);
   const isAdmin  = userInfo?.role === "admin";
 
-  // Auto-logout when the token is removed (e.g. cleared in another tab)
-  useEffect(() => {
-    if (isAuthenticated && !localStorage.getItem("token")) {
-      dispatch(logoutUser());
-      navigate("/login");
-    }
-  }, [dispatch, navigate, isAuthenticated]);
-
-  // Close the mobile drawer whenever the route changes
+ 
   useEffect(() => {
     setDrawerOpen(false);
   }, [location.pathname]);
@@ -166,8 +143,6 @@ function Navbar() {
   );
 }
 
-// ─── Logo ─────────────────────────────────────────────────────────────────────
-
 function Logo({ onClick }) {
   return (
     <button
@@ -192,7 +167,6 @@ function Logo({ onClick }) {
   );
 }
 
-// ─── Desktop Navigation ───────────────────────────────────────────────────────
 
 function DesktopNav({ links, isActive }) {
   return (
@@ -222,7 +196,6 @@ function DesktopNav({ links, isActive }) {
   );
 }
 
-// ─── Hamburger Button ─────────────────────────────────────────────────────────
 
 function HamburgerButton({ isOpen, onClick }) {
   return (
@@ -243,7 +216,6 @@ function HamburgerButton({ isOpen, onClick }) {
   );
 }
 
-// ─── User Menu (Desktop Dropdown) ─────────────────────────────────────────────
 
 function UserMenu({ userInfo, isAdmin, onLogout, onAppointments, navigate }) {
   return (
@@ -331,7 +303,6 @@ function UserMenu({ userInfo, isAdmin, onLogout, onAppointments, navigate }) {
   );
 }
 
-/** A single styled row inside the dropdown menu. */
 function DropdownItem({ icon, label, onClick, variant = "default" }) {
   const colorMap = {
     default: "text-gray-700 hover:bg-blue-50 hover:text-blue-600",
@@ -350,7 +321,6 @@ function DropdownItem({ icon, label, onClick, variant = "default" }) {
   );
 }
 
-// ─── Auth Buttons ─────────────────────────────────────────────────────────────
 
 function AuthButtons({ navigate }) {
   return (
@@ -374,19 +344,13 @@ function AuthButtons({ navigate }) {
   );
 }
 
-// ─── Mobile Drawer ────────────────────────────────────────────────────────────
-
-/**
- * A full-height slide-in panel from the right for mobile navigation.
- * Includes a dimmed backdrop that closes the drawer on click.
- */
 function MobileDrawer({
   isOpen, onClose,
   navLinks, isActive,
   isAuthenticated, userInfo, isAdmin,
   onLogout, onAppointments, navigate,
 }) {
-  // Lock body scroll while the drawer is visible
+ 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -523,7 +487,7 @@ function MobileDrawer({
   );
 }
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
+
 
 function AdminIcon() {
   return (
