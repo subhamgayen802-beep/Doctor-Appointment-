@@ -36,7 +36,6 @@ function App() {
     dispatch(checkAuth());
   }, [dispatch]);
  
-  // ✅ শুধু checkingAuth দেখাবে spinner — login/booking loading দেখাবে না
   if (checkingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center">

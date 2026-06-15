@@ -171,7 +171,6 @@ const handleBookAppointment = async () => {
     isBookingRef.current = true
 
     try {
-      // ✅ localStorage এর বদলে Redux user
       if (!isAuthenticated || !user) {
         alert("Please login first")
         navigate("/login")
@@ -202,7 +201,7 @@ const handleBookAppointment = async () => {
       isBookingRef.current = false
     }
 }
-  co
+
 
   if (doctorLoading || !docInfo) {
     return (
