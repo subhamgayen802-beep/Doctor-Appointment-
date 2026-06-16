@@ -23,7 +23,7 @@ app.use(cookieParser());
 
 
 const ALLOWED_ORIGINS = [
-  "https://omegale-clone.vercel.app",
+  "https://doctor-appointment-omega-dun.vercel.app",
   "http://localhost:5173",
 ];
 
