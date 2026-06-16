@@ -37,7 +37,9 @@ const createDoctor = async (req, res) => {
       createdBy: req.result._id
     };
 
-    // ✅ Image শুধু থাকলেই set করবে
+    console.log("REQ RESULT:", req.result);
+
+   
     if (req.file) {
       doctorData.image = req.file.path;
       doctorData.cloudinaryId = req.file.filename;
