@@ -21,9 +21,25 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 
+
+const ALLOWED_ORIGINS = [
+  "https://omegale-clone.vercel.app",
+  "http://localhost:5173",
+];
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL ||'http://localhost:5173',
-    credentials: true,
+  origin: (origin, callback) => {
+    if (
+      !origin ||
+      ALLOWED_ORIGINS.includes(origin) ||
+      origin.endsWith(".vercel.app") 
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
 }));
 
 app.use( "/user",authRoutes);
