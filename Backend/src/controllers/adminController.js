@@ -10,7 +10,9 @@ const Appointment = require('../models/appointment')
  
 const createDoctor = async (req, res) => {
   try {
-    console.log("REQ RESULT:", req.result);
+   console.log("BODY:", req.body);
+console.log("FILE:", req.file);
+console.log("RESULT:", req.result);
     const {
       firstName, emailId, password,
       specialization, experience, fees, phone, description
